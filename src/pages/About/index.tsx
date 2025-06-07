@@ -402,12 +402,12 @@ function CrossPoint({ row, col }) {
       className="rounded"
       style={{
         position: "absolute",
-        width: CHESS_SIZE,
-        height: CHESS_SIZE,
-        top: row * CELL - CHESS_SIZE / 2,
-        left: col * CELL - CHESS_SIZE / 2,
-        borderRadius: CHESS_SIZE,
+        width: CHESS_SIZE * 1.25,
+        height: CHESS_SIZE * 1.25,
+        top: row * CELL - CHESS_SIZE * 1.25 / 2,
+        left: col * CELL - CHESS_SIZE * 1.25 / 2,
         background: collected.canDrop ? "green" : "initial",
+        // backgroundColor: 'orange'
       }}
     ></div>
   );
