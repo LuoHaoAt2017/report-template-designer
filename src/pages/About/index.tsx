@@ -1,4 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useContext, createContext, useReducer } from "react";
+import { useDrag, DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { cloneDeep } from "lodash";
 import {
   CHU_PIECES,
   HAN_PIECES,
@@ -6,25 +9,83 @@ import {
   COLS,
   CELL,
   LINE,
+  ItemTypes,
   CHESS_SIZE,
   ChessStatus,
+  ChessAction,
   ChessColor,
   ChessItem,
+  DragCollectProps,
+  DropCollectProps,
+  canMove,
+  matchPos,
+  ChessPosition,
 } from "./config";
 
+const ChessListContext = createContext<ChessItem[]>([]);
+const DispatchContext = createContext(null);
+
+type IChessState = {
+  chessList: ChessItem[];
+};
+
+type IChessAction = {
+  type: ChessAction.MOVE;
+  payload: { dragItem: ChessItem; position: ChessPosition };
+};
+
+const initState: IChessState = {
+  chessList: [].concat(...CHU_PIECES, ...HAN_PIECES),
+};
+
+function chessReducer(state: IChessState, action: IChessAction) {
+  const chessList = cloneDeep(state.chessList);
+  const { dragItem, position } = action.payload;
+  switch (action.type) {
+    case ChessAction.MOVE: {
+      const dragIndex = chessList.findIndex(
+        (item) => item.code === dragItem.code
+      );
+      if (dragIndex === -1) {
+        return state;
+      }
+      const dropIndex = chessList.findIndex((item) => matchPos(item, position));
+      if (dropIndex === -1) {
+        chessList[dragIndex].position = position;
+      } else {
+        const tempPos = dragItem.position;
+        chessList[dragIndex].position = position;
+        chessList[dropIndex].position = tempPos;
+      }
+      return {
+        ...state,
+        chessList,
+      };
+    }
+    default:
+      return state;
+  }
+}
+
 export default function About() {
-  const [chuChessList, setChuChessList] = useState<ChessItem[]>(CHU_PIECES);
-  const [hanChessList, setHanChessList] = useState<ChessItem[]>(HAN_PIECES);
+  const [state, dispatch] = useReducer(chessReducer, initState);
+  const chessList = state.chessList;
 
   const chessPieceList = useMemo(() => {
-    return [...chuChessList, ...hanChessList]
+    return chessList
       .filter((item) => item.status === ChessStatus.ALIVE)
       .map((item) => <ChessPiece key={item.code} item={item} />);
-  }, [chuChessList, hanChessList]);
+  }, [chessList]);
 
   return (
-    <div className="flex justify-center py-12">
-      <ChessBoard>{chessPieceList}</ChessBoard>
+    <div className="container flex justify-center py-24">
+      <DispatchContext.Provider value={dispatch}>
+        <ChessListContext.Provider value={chessList}>
+          <DndProvider backend={HTML5Backend}>
+            <ChessBoard>{chessPieceList}</ChessBoard>
+          </DndProvider>
+        </ChessListContext.Provider>
+      </DispatchContext.Provider>
     </div>
   );
 }
@@ -76,8 +137,9 @@ function ChessBoard({ children }) {
       { row: 7, col: 3, rotate: 45 },
       { row: 7, col: 5, rotate: 135 },
     ];
-    return points.map((point) => (
+    return points.map((point, index) => (
       <span
+        key={index}
         className="absolute"
         style={{
           background: "#000",
@@ -99,7 +161,7 @@ function ChessBoard({ children }) {
     const crossPoints = [];
     for (let i = 0; i < ROWS; i++) {
       for (let j = 0; j < COLS; j++) {
-        crossPoints.push(<CrossPoint row={i} col={j} />);
+        crossPoints.push(<CrossPoint key={`${i}-${j}`} row={i} col={j} />);
       }
     }
     return crossPoints;
@@ -122,12 +184,13 @@ function ChessBoard({ children }) {
       { row: 7, col: 1 },
       { row: 7, col: 7 },
     ];
-    return points.map((point) => {
+    return points.map((point, index) => {
       const radius = 18;
       const borderColor = "#000";
       const borderWidth = 1;
       return (
         <div
+          key={index}
           className="absolute"
           style={{
             top: point.row * CELL - radius / 2,
@@ -262,8 +325,21 @@ function ChessBoard({ children }) {
  */
 function ChessPiece({ item }: { item: ChessItem }) {
   const { row, col } = item.position;
+
+  const [collected, drag] = useDrag<ChessItem, unknown, DragCollectProps>(
+    () => ({
+      type: ItemTypes.CHESS,
+      item: item,
+      collect(monitor) {
+        return {
+          isDragging: monitor.isDragging(),
+        };
+      },
+    })
+  );
   return (
     <div
+      ref={drag}
       className="flex justify-center align-middle bg-white cursor-move"
       style={{
         position: "absolute",
@@ -273,8 +349,9 @@ function ChessPiece({ item }: { item: ChessItem }) {
         top: row * CELL - CHESS_SIZE / 2,
         left: col * CELL - CHESS_SIZE / 2,
         zIndex: 2,
-        opacity: 1,
+        opacity: collected.isDragging ? 0.5 : 1.0,
         border: `2px solid ${item.color}`,
+        cursor: collected.isDragging ? "grab" : "initial",
       }}
     >
       <span className="self-center" style={{ color: item.color, fontSize: 48 }}>
@@ -288,16 +365,41 @@ function ChessPiece({ item }: { item: ChessItem }) {
  * 落子点
  */
 function CrossPoint({ row, col }) {
+  const chessList = useContext(ChessListContext);
+  const dispatch = useContext(DispatchContext);
+  const [collected, drop] = useDrop<ChessItem, unknown, DropCollectProps>(
+    () => ({
+      accept: ItemTypes.CHESS,
+      canDrop(dragItem) {
+        return canMove(dragItem, { row, col }, chessList);
+      },
+      collect(monitor) {
+        return {
+          canDrop: monitor.canDrop(),
+          isOver: monitor.isOver(),
+        };
+      },
+      drop(dragItem) {
+        dispatch({
+          type: ChessAction.MOVE,
+          payload: { dragItem, position: { row, col } },
+        });
+      },
+    }),
+    [chessList, dispatch, row, col]
+  );
   return (
     <div
+      ref={drop}
       className="rounded"
       style={{
         position: "absolute",
-        top: row * CELL - CHESS_SIZE / 2,
-        left: col * CELL - CHESS_SIZE / 2,
         width: CHESS_SIZE,
         height: CHESS_SIZE,
+        top: row * CELL - CHESS_SIZE / 2,
+        left: col * CELL - CHESS_SIZE / 2,
         borderRadius: CHESS_SIZE,
+        background: collected.canDrop ? "green" : "initial",
       }}
     ></div>
   );
