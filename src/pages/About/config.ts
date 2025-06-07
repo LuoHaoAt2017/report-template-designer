@@ -377,6 +377,9 @@ export const canMove = (
   dropPosition: ChessPosition,
   chessList: ChessItem[]
 ) => {
+	// if (dropPosition.row === 2 && dropPosition.col === 4) {
+	// 	console.log('dragItem: ', dragItem);
+	// }
   const dropItem = chessList.find((item) => matchPos(item, dropPosition));
   // 起步点的棋子和落地点的棋子不能是同一方
   if (dropItem && dragItem.type === dropItem.type) {

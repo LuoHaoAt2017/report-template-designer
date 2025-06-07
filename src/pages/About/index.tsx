@@ -47,7 +47,9 @@ function chessReducer(state: IChessState, action: IChessAction) {
         (item) => item.code === dragItem.code
       );
       if (dragIndex === -1) {
-        return state;
+        return {
+          ...state,
+        };
       }
       const dropIndex = chessList.findIndex((item) => matchPos(item, position));
       if (dropIndex === -1) {
@@ -70,7 +72,12 @@ function chessReducer(state: IChessState, action: IChessAction) {
 export default function About() {
   const [state, dispatch] = useReducer(chessReducer, initState);
   const chessList = state.chessList;
-
+  console.table(
+    chessList.map((item) => ({
+      ...item,
+      position: [item.position.row, item.position.col].join(","),
+    }))
+  );
   const chessPieceList = useMemo(() => {
     return chessList
       .filter((item) => item.status === ChessStatus.ALIVE)
@@ -335,7 +342,8 @@ function ChessPiece({ item }: { item: ChessItem }) {
           isDragging: monitor.isDragging(),
         };
       },
-    })
+    }),
+    [item]
   );
   return (
     <div
