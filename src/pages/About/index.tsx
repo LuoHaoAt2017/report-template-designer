@@ -1,18 +1,30 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  CHU_PIECES,
+  HAN_PIECES,
+  ROWS,
+  COLS,
+  CELL,
+  LINE,
+  CHESS_SIZE,
+  ChessStatus,
+  ChessColor,
+  ChessItem,
+} from "./config";
 
-enum ItemType {
-  RED = "RED",
-  BLACK = "BLACK",
-}
-
-const ROWS = 10;
-const COLS = 9;
-const CELL = 128; // 行列的间距
-const LINE = 1; // 网格线的宽度
 export default function About() {
+  const [chuChessList, setChuChessList] = useState<ChessItem[]>(CHU_PIECES);
+  const [hanChessList, setHanChessList] = useState<ChessItem[]>(HAN_PIECES);
+
+  const chessPieceList = useMemo(() => {
+    return [...chuChessList, ...hanChessList]
+      .filter((item) => item.status === ChessStatus.ALIVE)
+      .map((item) => <ChessPiece key={item.code} item={item} />);
+  }, [chuChessList, hanChessList]);
+
   return (
     <div className="flex justify-center py-12">
-      <ChessBoard>About</ChessBoard>
+      <ChessBoard>{chessPieceList}</ChessBoard>
     </div>
   );
 }
@@ -75,8 +87,8 @@ function ChessBoard({ children }) {
           height: 1,
           rotate: `${point.rotate}deg`,
           transformOrigin: "left top",
-          imageRendering: 'pixelated',
-          backfaceVisibility: 'hidden',
+          imageRendering: "pixelated",
+          backfaceVisibility: "hidden",
           zIndex,
         }}
       />
@@ -203,10 +215,30 @@ function ChessBoard({ children }) {
         }}
       >
         <div className=" flex justify-around align-middle h-full">
-          <span className="text-6xl self-center -rotate-90">楚</span>
-          <span className="text-6xl self-center -rotate-90">河</span>
-          <span className="text-6xl self-center -rotate-90">汉</span>
-          <span className="text-6xl self-center -rotate-90">界</span>
+          <span
+            className="text-6xl self-center -rotate-90"
+            style={{ color: ChessColor.CHU }}
+          >
+            楚
+          </span>
+          <span
+            className="text-6xl self-center -rotate-90"
+            style={{ color: ChessColor.CHU }}
+          >
+            河
+          </span>
+          <span
+            className="text-6xl self-center -rotate-90"
+            style={{ color: ChessColor.HAN }}
+          >
+            汉
+          </span>
+          <span
+            className="text-6xl self-center -rotate-90"
+            style={{ color: ChessColor.HAN }}
+          >
+            界
+          </span>
         </div>
       </div>
     );
@@ -228,25 +260,44 @@ function ChessBoard({ children }) {
 /**
  * 棋子
  */
-function ChessPiece({ children }) {
-  return <>{children}</>;
+function ChessPiece({ item }: { item: ChessItem }) {
+  const { row, col } = item.position;
+  return (
+    <div
+      className="flex justify-center align-middle bg-white cursor-move"
+      style={{
+        position: "absolute",
+        width: CHESS_SIZE,
+        height: CHESS_SIZE,
+        borderRadius: CELL,
+        top: row * CELL - CHESS_SIZE / 2,
+        left: col * CELL - CHESS_SIZE / 2,
+        zIndex: 2,
+        opacity: 1,
+        border: `2px solid ${item.color}`,
+      }}
+    >
+      <span className="self-center" style={{ color: item.color, fontSize: 48 }}>
+        {item.label}
+      </span>
+    </div>
+  );
 }
 
 /**
  * 落子点
  */
 function CrossPoint({ row, col }) {
-  const size = CELL / 2;
   return (
     <div
       className="rounded"
       style={{
         position: "absolute",
-        top: row * CELL - size / 2,
-        left: col * CELL - size / 2,
-        width: size,
-        height: size,
-        borderRadius: size,
+        top: row * CELL - CHESS_SIZE / 2,
+        left: col * CELL - CHESS_SIZE / 2,
+        width: CHESS_SIZE,
+        height: CHESS_SIZE,
+        borderRadius: CHESS_SIZE,
       }}
     ></div>
   );
