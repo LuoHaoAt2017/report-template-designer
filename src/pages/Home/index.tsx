@@ -3,6 +3,7 @@ import { cloneDeep, isNil } from "lodash";
 import {
   useCallback,
   useState,
+  useRef,
   createContext,
   useContext,
   useEffect,
@@ -109,6 +110,7 @@ export default function Home() {
 }
 
 function CardItem({ item }) {
+  const previewRef = useRef(null);
   const [collected, drag, dragPreview] = useDrag<
     DragItem,
     unknown,
@@ -116,25 +118,52 @@ function CardItem({ item }) {
   >(() => ({
     type: ItemType,
     item: item,
+    collect(monitor) {
+      return {
+        isDragging: monitor.isDragging(),
+      };
+    },
   }));
+
+  useEffect(() => {
+    dragPreview(previewRef, {
+      offsetX: 10,
+      offsetY: 10,
+      captureDraggingState: true
+    });
+  }, [dragPreview]);
+
   if (isNil(item)) {
     return <></>;
   }
-  if (collected.isDragging) {
-    return (
-      <div ref={dragPreview} className="bg-slate-300 rounded opacity-50">
-        <img src={item} className="object-contain" />
-      </div>
-    );
-  }
   return (
-    <div
-      ref={drag}
-      {...collected}
-      className="bg-slate-300 rounded overflow-hidden"
-    >
-      <img src={item.url} className="object-contain" />
-    </div>
+    <>
+      <div
+        ref={previewRef}
+        style={{
+          position: "fixed",
+          top: -1000,
+          left: -1000,
+          width: "240px",
+          height: "160px",
+          backgroundImage: `url(${item.url})`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          border: '2px solid #ccc',
+          borderRadius: '8px',
+        }}
+      ></div>
+      <div
+        ref={drag}
+        {...collected}
+        className="bg-slate-300 rounded overflow-hidden"
+        style={{
+          opacity: collected.isDragging ? 0.5 : 1.0,
+        }}
+      >
+        <img src={item.url} className="object-contain" />
+      </div>
+    </>
   );
 }
 
