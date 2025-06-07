@@ -185,6 +185,9 @@ function GridSquare({ index, onMove, children }) {
       ref={drop}
       {...collected}
       className="bg-slate-300 rounded overflow-hidden"
+      style={{
+        opacity: collected.isOver ? 0.5 : 1.0
+      }}
     >
       {children}
     </div>
