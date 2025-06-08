@@ -68,7 +68,7 @@ function chessReducer(state: IChessState, action: IChessAction) {
   }
 }
 
-export default function About() {
+export default function Chess() {
   const [state, dispatch] = useReducer(chessReducer, initState);
   const chessList = state.chessList;
   console.table(
