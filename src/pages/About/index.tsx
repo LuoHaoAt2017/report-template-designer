@@ -55,9 +55,8 @@ function chessReducer(state: IChessState, action: IChessAction) {
       if (dropIndex === -1) {
         chessList[dragIndex].position = position;
       } else {
-        const tempPos = dragItem.position;
         chessList[dragIndex].position = position;
-        chessList[dropIndex].position = tempPos;
+        chessList[dropIndex].status = ChessStatus.DEAD;
       }
       return {
         ...state,
