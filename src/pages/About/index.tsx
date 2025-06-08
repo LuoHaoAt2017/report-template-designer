@@ -423,6 +423,7 @@ function CrossPoint({ row, col }) {
         height: CHESS_SIZE * 1.25,
         top: row * CELL - (CHESS_SIZE * 1.25) / 2,
         left: col * CELL - (CHESS_SIZE * 1.25) / 2,
+        zIndex: 2,
         ...cellStyle,
       }}
     ></div>
