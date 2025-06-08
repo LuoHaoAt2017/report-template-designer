@@ -356,8 +356,8 @@ function ChessPiece({ item }: { item: ChessItem }) {
         top: row * CELL - CHESS_SIZE / 2,
         left: col * CELL - CHESS_SIZE / 2,
         zIndex: 2,
-        opacity: collected.isDragging ? 0.5 : 1.0,
         border: `2px solid ${item.color}`,
+        opacity: collected.isDragging ? 0.5 : 1.0,
         cursor: collected.isDragging ? "grab" : "initial",
       }}
     >
@@ -379,6 +379,10 @@ function CrossPoint({ row, col }) {
       accept: ItemTypes.CHESS,
       canDrop(dragItem) {
         return canMove(dragItem, { row, col }, chessList);
+      },
+      hover(item, monitor) {
+        // 默认hover的判定逻辑是被拖拽元素的中心点坐标是否在目标区域之内
+        return monitor.isOver()
       },
       collect(monitor) {
         return {

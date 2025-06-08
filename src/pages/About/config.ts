@@ -1,3 +1,4 @@
+import { range } from "lodash";
 export const ROWS = 10;
 export const COLS = 9;
 export const CELL = 128; // 行列的间距
@@ -295,6 +296,41 @@ export const isInPalace = (position: ChessPosition, chessType: ChessType) => {
 };
 
 /**
+ * 检测落子点和起子点之间是否有障碍物
+ */
+export const isExistObstacle = (
+  position: ChessPosition,
+  dragItem: ChessItem,
+  chessList: ChessItem[]
+) => {
+  const { row: startRow, col: startCol } = dragItem.position;
+  const { row: endRow, col: endCol } = position;
+  if (startRow === endRow) {
+    // 横向行走
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+    for (let col = minCol + 1; col < maxCol; col++) {
+      if (chessList.some((item) => matchPos(item, { row: startRow, col }))) {
+        return true;
+      }
+    }
+    return false;
+  }
+  if (startCol === endCol) {
+    // 纵向行走
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+    for (let row = minRow + 1; row < maxRow; row++) {
+      if (chessList.some((item) => matchPos(item, { row, col: startCol }))) {
+        return true;
+      }
+    }
+    return false;
+  }
+  throw new Error("参数错误");
+};
+
+/**
  * 检测落子点是否已经在河对岸
  */
 export const isCrossRiver = (position: ChessPosition, chessType: ChessType) => {
@@ -336,6 +372,29 @@ export const isValidStep = (pos: ChessPosition, dragItem: ChessItem) => {
       const dx = Math.abs(pos.col - col);
       const dy = Math.abs(pos.row - row);
       return (dx === 1 && dy === 2) || (dx === 2 && dy === 1);
+    }
+    case ChessRole.Chariot: {
+      // 步长检查：必须走直线，横向或者纵向
+      const dx = Math.abs(pos.col - col);
+      const dy = Math.abs(pos.row - row);
+      return dx === 0 || dy === 0;
+    }
+    case ChessRole.Soldier: {
+      const dragPosition = dragItem.position;
+      const dRow = pos.row - dragPosition.row;
+      const dCol = pos.col - dragPosition.col;
+      // 没有过河，卒只能往前，过河的卒可以往前，往左，往右
+      if (isCrossRiver(pos, dragItem.type)) {
+        if (Math.abs(dRow) + Math.abs(dCol) !== 1) {
+          return false;
+        }
+        return dragItem.type === ChessType.CHU ? dRow !== -1 : dRow !== 1;
+      } else {
+        if (Math.abs(dCol) !== 0 || Math.abs(dRow) !== 1) {
+          return false;
+        }
+        return dragItem.type === ChessType.CHU ? dRow === 1 : dRow === -1;
+      }
     }
   }
 };
@@ -415,25 +474,25 @@ export const canKnightMove = (
   return chessList.findIndex((item) => matchPos(item, blockPosition)) === -1;
 };
 
+export const canChariotMove = (
+  dragItem: ChessItem,
+  dropPosition: ChessPosition,
+  chessList: ChessItem[]
+) => {
+  if (!isValidStep(dropPosition, dragItem)) {
+    return false;
+  }
+  if (isExistObstacle(dropPosition, dragItem, chessList)) {
+    return false;
+  }
+  return true;
+};
+
 export const canSoldierMove = (
   dragItem: ChessItem,
   dropPosition: ChessPosition
 ) => {
-  const dragPosition = dragItem.position;
-  const dRow = dropPosition.row - dragPosition.row;
-  const dCol = dropPosition.col - dragPosition.col;
-  // 没有过河，卒只能往前，过河的卒可以往前，往左，往右
-  if (isCrossRiver(dropPosition, dragItem.type)) {
-    if (Math.abs(dRow) + Math.abs(dCol) !== 1) {
-      return false;
-    }
-    return dragItem.type === ChessType.CHU ? dRow !== -1 : dRow !== 1;
-  } else {
-    if (Math.abs(dCol) !== 0 || Math.abs(dRow) !== 1) {
-      return false;
-    }
-    return dragItem.type === ChessType.CHU ? dRow === 1 : dRow === -1;
-  }
+  return isValidStep(dropPosition, dragItem);
 };
 
 export const canMove = (
@@ -465,6 +524,7 @@ export const canMove = (
       enable = canKnightMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Chariot:
+      enable = canChariotMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Cannon:
       break;
