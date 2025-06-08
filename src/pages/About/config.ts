@@ -53,7 +53,7 @@ export interface ChessPosition {
 export interface ChessItem {
   label: string;
   role: string;
-	code: string;
+  code: string;
   type: ChessType;
   status: ChessStatus;
   position: ChessPosition;
@@ -355,12 +355,22 @@ export const canAdvisorMove = (
 
 export const canElephantMove = (
   dragItem: ChessItem,
-  dropPosition: ChessPosition
+  dropPosition: ChessPosition,
+  chessList: ChessItem[]
 ) => {
   if (isCrossRiver(dropPosition, dragItem.type)) {
     return false;
   }
-  // todo: 检测象眼是否被堵
+  const dragPosition = dragItem.position;
+  const eyePosition = {
+    row: (dragPosition.row + dropPosition.row) / 2,
+    col: (dragPosition.col + dropPosition.col) / 2,
+  };
+  const eyeItem = chessList.find((item) => matchPos(item, eyePosition));
+  // 检测象眼是否被堵
+  if (eyeItem) {
+    return false;
+  }
   return isValidStep(dropPosition, dragItem);
 };
 
@@ -377,9 +387,9 @@ export const canMove = (
   dropPosition: ChessPosition,
   chessList: ChessItem[]
 ) => {
-	// if (dropPosition.row === 2 && dropPosition.col === 4) {
-	// 	console.log('dragItem: ', dragItem);
-	// }
+  // if (dropPosition.row === 2 && dropPosition.col === 4) {
+  // 	console.log('dragItem: ', dragItem);
+  // }
   const dropItem = chessList.find((item) => matchPos(item, dropPosition));
   // 起步点的棋子和落地点的棋子不能是同一方
   if (dropItem && dragItem.type === dropItem.type) {
@@ -395,7 +405,7 @@ export const canMove = (
       enable = canAdvisorMove(dragItem, dropPosition);
       break;
     case ChessRole.Elephant:
-      enable = canElephantMove(dragItem, dropPosition);
+      enable = canElephantMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Knight:
       enable = canKnightMove(dragItem, dropPosition);
