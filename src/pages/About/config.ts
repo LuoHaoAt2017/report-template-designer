@@ -361,25 +361,51 @@ export const canElephantMove = (
   if (isCrossRiver(dropPosition, dragItem.type)) {
     return false;
   }
+  if (!isValidStep(dropPosition, dragItem)) {
+    return false;
+  }
+  // 检测象眼是否被堵
   const dragPosition = dragItem.position;
   const eyePosition = {
     row: (dragPosition.row + dropPosition.row) / 2,
     col: (dragPosition.col + dropPosition.col) / 2,
   };
-  const eyeItem = chessList.find((item) => matchPos(item, eyePosition));
-  // 检测象眼是否被堵
-  if (eyeItem) {
-    return false;
-  }
-  return isValidStep(dropPosition, dragItem);
+  return chessList.findIndex((item) => matchPos(item, eyePosition)) === -1;
 };
 
 export const canKnightMove = (
   dragItem: ChessItem,
-  dropPosition: ChessPosition
+  dropPosition: ChessPosition,
+  chessList: ChessItem[]
 ) => {
-  // // todo: 检测马脚是否被撇
-  return isValidStep(dropPosition, dragItem);
+  if (!isValidStep(dropPosition, dragItem)) {
+    return false;
+  }
+  // 检测马脚是否被撇
+  const dragPosition = dragItem.position;
+  const dRow = Math.abs(dropPosition.row - dragPosition.row);
+  const dCol = Math.abs(dropPosition.col - dragPosition.col);
+  let blockPosition = { row: -1, col: -1 };
+  if (dRow === 1 && dCol === 2) {
+    blockPosition = {
+      row: dragPosition.row,
+      col:
+        dropPosition.col > dragPosition.col
+          ? dragPosition.col + 1
+          : dragPosition.col - 1,
+    };
+  } else if (dRow === 2 && dCol === 1) {
+    blockPosition = {
+      row:
+        dropPosition.row > dragPosition.row
+          ? dragPosition.row + 1
+          : dragPosition.col - 1,
+      col: dragPosition.col,
+    };
+  } else {
+    throw new Error("马的移动位置错误");
+  }
+  return chessList.findIndex((item) => matchPos(item, blockPosition)) === -1;
 };
 
 export const canMove = (
@@ -408,7 +434,7 @@ export const canMove = (
       enable = canElephantMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Knight:
-      enable = canKnightMove(dragItem, dropPosition);
+      enable = canKnightMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Chariot:
       break;
