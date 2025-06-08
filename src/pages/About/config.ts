@@ -60,8 +60,9 @@ export interface ChessItem {
   color: ChessColor;
 }
 
-// export const HAN_PIECES = ["帅", "仕", "相", "馬", "車", "砲", "兵"];
-
+/**
+ * 楚方所有棋子
+ */
 export const CHU_PIECES = [
   {
     label: "将",
@@ -166,6 +167,9 @@ export const CHU_PIECES = [
   color: ChessColor.CHU,
 }));
 
+/**
+ * 汉方所有棋子
+ */
 export const HAN_PIECES = [
   {
     label: "帅",
@@ -270,6 +274,9 @@ export const HAN_PIECES = [
   color: ChessColor.HAN,
 }));
 
+/**
+ * 检测位置是否相等
+ */
 export const matchPos = (item: ChessItem, pos: ChessPosition) => {
   return item.position.row === pos.row && item.position.col === pos.col;
 };
@@ -408,6 +415,27 @@ export const canKnightMove = (
   return chessList.findIndex((item) => matchPos(item, blockPosition)) === -1;
 };
 
+export const canSoldierMove = (
+  dragItem: ChessItem,
+  dropPosition: ChessPosition
+) => {
+  const dragPosition = dragItem.position;
+  const dRow = dropPosition.row - dragPosition.row;
+  const dCol = dropPosition.col - dragPosition.col;
+  // 没有过河，卒只能往前，过河的卒可以往前，往左，往右
+  if (isCrossRiver(dropPosition, dragItem.type)) {
+    if (Math.abs(dRow) + Math.abs(dCol) !== 1) {
+      return false;
+    }
+    return dragItem.type === ChessType.CHU ? dRow !== -1 : dRow !== 1;
+  } else {
+    if (Math.abs(dCol) !== 0 || Math.abs(dRow) !== 1) {
+      return false;
+    }
+    return dragItem.type === ChessType.CHU ? dRow === 1 : dRow === -1;
+  }
+};
+
 export const canMove = (
   dragItem: ChessItem,
   dropPosition: ChessPosition,
@@ -441,6 +469,7 @@ export const canMove = (
     case ChessRole.Cannon:
       break;
     case ChessRole.Soldier:
+      enable = canSoldierMove(dragItem, dropPosition);
       break;
     default:
       enable = false;
