@@ -1,4 +1,5 @@
-import { range } from "lodash";
+import { isNil } from "lodash";
+
 export const ROWS = 10;
 export const COLS = 9;
 export const CELL = 128; // 行列的间距
@@ -298,7 +299,7 @@ export const isInPalace = (position: ChessPosition, chessType: ChessType) => {
 /**
  * 检测落子点和起子点之间是否有障碍物
  */
-export const isExistObstacle = (
+export const getObstacles = (
   position: ChessPosition,
   dragItem: ChessItem,
   chessList: ChessItem[]
@@ -309,23 +310,25 @@ export const isExistObstacle = (
     // 横向行走
     const minCol = Math.min(startCol, endCol);
     const maxCol = Math.max(startCol, endCol);
+    let result = 0;
     for (let col = minCol + 1; col < maxCol; col++) {
       if (chessList.some((item) => matchPos(item, { row: startRow, col }))) {
-        return true;
+        result++;
       }
     }
-    return false;
+    return result;
   }
   if (startCol === endCol) {
     // 纵向行走
     const minRow = Math.min(startRow, endRow);
     const maxRow = Math.max(startRow, endRow);
+    let result = 0;
     for (let row = minRow + 1; row < maxRow; row++) {
       if (chessList.some((item) => matchPos(item, { row, col: startCol }))) {
-        return true;
+        result++;
       }
     }
-    return false;
+    return result;
   }
   throw new Error("参数错误");
 };
@@ -375,9 +378,16 @@ export const isValidStep = (pos: ChessPosition, dragItem: ChessItem) => {
     }
     case ChessRole.Chariot: {
       // 步长检查：必须走直线，横向或者纵向
-      const dx = Math.abs(pos.col - col);
-      const dy = Math.abs(pos.row - row);
-      return dx === 0 || dy === 0;
+      const dCol = Math.abs(pos.col - col);
+      const dRow = Math.abs(pos.row - row);
+      return dRow === 0 || dCol === 0;
+    }
+    case ChessRole.Cannon: {
+      // 步长检查：必须走直线，横向或者纵向
+      // 步长检查：必须走直线，横向或者纵向
+      const dCol = Math.abs(pos.col - col);
+      const dRow = Math.abs(pos.row - row);
+      return dRow === 0 || dCol === 0;
     }
     case ChessRole.Soldier: {
       const dragPosition = dragItem.position;
@@ -482,10 +492,26 @@ export const canChariotMove = (
   if (!isValidStep(dropPosition, dragItem)) {
     return false;
   }
-  if (isExistObstacle(dropPosition, dragItem, chessList)) {
+  return getObstacles(dropPosition, dragItem, chessList) === 0;
+};
+
+export const canCannonMove = (
+  dragItem: ChessItem,
+  dropPosition: ChessPosition,
+  chessList: ChessItem[]
+) => {
+  if (!isValidStep(dropPosition, dragItem)) {
     return false;
   }
-  return true;
+  const count = getObstacles(dropPosition, dragItem, chessList);
+  if (count > 1) {
+    return false;
+  }
+  const dropItem = chessList.find((item) => matchPos(item, dropPosition));
+  if (count === 1) {
+    return dropItem && dropItem.type !== dragItem.type;
+  }
+  return isNil(dropItem);
 };
 
 export const canSoldierMove = (
@@ -527,6 +553,7 @@ export const canMove = (
       enable = canChariotMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Cannon:
+      enable = canCannonMove(dragItem, dropPosition, chessList);
       break;
     case ChessRole.Soldier:
       enable = canSoldierMove(dragItem, dropPosition);
