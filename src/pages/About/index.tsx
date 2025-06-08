@@ -274,10 +274,10 @@ function ChessBoard({ children }) {
       <div
         className="absolute"
         style={{
-          top: 4 * CELL + 0.5,
+          top: 4 * CELL + 1,
           left: 1,
-          width: W - 0.5,
-          height: CELL - 0.5,
+          width: W - 1,
+          height: CELL - 1,
           zIndex,
           opacity: 1,
           background: "#fff",
