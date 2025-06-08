@@ -396,6 +396,22 @@ function CrossPoint({ row, col }) {
     }),
     [chessList, dispatch, row, col]
   );
+
+  const cellStyle = useMemo(() => {
+    if (collected.canDrop && collected.isOver) {
+      return {
+        backgroundColor: "green",
+      };
+    } else if (collected.canDrop && !collected.isOver) {
+      return {
+        backgroundColor: "orange",
+      };
+    } else {
+      return {
+        backgroundColor: "",
+      };
+    }
+  }, [collected.canDrop, collected.isOver]);
   return (
     <div
       ref={drop}
@@ -404,10 +420,9 @@ function CrossPoint({ row, col }) {
         position: "absolute",
         width: CHESS_SIZE * 1.25,
         height: CHESS_SIZE * 1.25,
-        top: row * CELL - CHESS_SIZE * 1.25 / 2,
-        left: col * CELL - CHESS_SIZE * 1.25 / 2,
-        background: collected.canDrop ? "green" : "initial",
-        // backgroundColor: 'orange'
+        top: row * CELL - (CHESS_SIZE * 1.25) / 2,
+        left: col * CELL - (CHESS_SIZE * 1.25) / 2,
+        ...cellStyle,
       }}
     ></div>
   );
