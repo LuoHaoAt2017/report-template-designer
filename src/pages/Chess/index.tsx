@@ -71,12 +71,12 @@ function chessReducer(state: IChessState, action: IChessAction) {
 export default function Chess() {
   const [state, dispatch] = useReducer(chessReducer, initState);
   const chessList = state.chessList;
-  console.table(
-    chessList.map((item) => ({
-      ...item,
-      position: [item.position.row, item.position.col].join(","),
-    }))
-  );
+  // console.table(
+  //   chessList.map((item) => ({
+  //     ...item,
+  //     position: [item.position.row, item.position.col].join(","),
+  //   }))
+  // );
   const chessPieceList = useMemo(() => {
     return chessList.map((item) => <ChessPiece key={item.code} item={item} />);
   }, [chessList]);

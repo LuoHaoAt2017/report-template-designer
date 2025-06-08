@@ -155,7 +155,6 @@ function CardItem({ item }) {
       ></div>
       <div
         ref={drag}
-        {...collected}
         className="bg-slate-300 rounded overflow-hidden"
         style={{
           opacity: collected.isDragging ? 0.5 : 1.0,
@@ -183,7 +182,6 @@ function GridSquare({ index, onMove, children }) {
   return (
     <div
       ref={drop}
-      {...collected}
       className="bg-slate-300 rounded overflow-hidden"
       style={{
         opacity: collected.isOver ? 0.5 : 1.0
