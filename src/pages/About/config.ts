@@ -57,7 +57,6 @@ export interface ChessItem {
   role: string;
   code: string;
   type: ChessType;
-  status: ChessStatus;
   position: ChessPosition;
   color: ChessColor;
 }
@@ -165,7 +164,6 @@ export const CHU_PIECES = [
 ].map((item) => ({
   ...item,
   type: ChessType.CHU,
-  status: ChessStatus.ALIVE,
   color: ChessColor.CHU,
 }));
 
@@ -272,7 +270,6 @@ export const HAN_PIECES = [
 ].map((item) => ({
   ...item,
   type: ChessType.HAN,
-  status: ChessStatus.ALIVE,
   color: ChessColor.HAN,
 }));
 

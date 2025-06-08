@@ -56,7 +56,7 @@ function chessReducer(state: IChessState, action: IChessAction) {
         chessList[dragIndex].position = position;
       } else {
         chessList[dragIndex].position = position;
-        chessList[dropIndex].status = ChessStatus.DEAD;
+        chessList.splice(dropIndex, 1);
       }
       return {
         ...state,
@@ -78,9 +78,7 @@ export default function About() {
     }))
   );
   const chessPieceList = useMemo(() => {
-    return chessList
-      .filter((item) => item.status === ChessStatus.ALIVE)
-      .map((item) => <ChessPiece key={item.code} item={item} />);
+    return chessList.map((item) => <ChessPiece key={item.code} item={item} />);
   }, [chessList]);
 
   return (
@@ -382,7 +380,7 @@ function CrossPoint({ row, col }) {
       },
       hover(item, monitor) {
         // 默认hover的判定逻辑是被拖拽元素的中心点坐标是否在目标区域之内
-        return monitor.isOver()
+        return monitor.isOver();
       },
       collect(monitor) {
         return {
